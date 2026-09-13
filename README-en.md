@@ -1,108 +1,89 @@
 # VMIyagi
 
-A development VM management tool for verifying the **Iyagi Series `.deb` packages on a clean Ubuntu installation**.
+**A tool for checking whether your programs actually run on other people's PCs, using clean virtual machines.**
 
-The goal is to eliminate the classic *“It works on my PC”* problem. Install a `.deb` on an Ubuntu system with nothing preinstalled, check whether it runs, and repeatedly return to a clean state.
+VMIyagi was created to eliminate the classic *"It works on my PC"* problem. Install a package in a Linux VM with nothing preinstalled, run it, and return to the saved clean state with one click. Repeat as needed.
 
-VMIyagi is **not intended to replace VirtualBox or GNOME Boxes**. It is a thin frontend built on top of QEMU/KVM, containing only the features needed for this repetitive testing workflow.
+A lightweight management interface built on top of QEMU/KVM. It is not a full-featured VM manager like VirtualBox — it includes only the features needed for this repetitive testing workflow.
 
-The interface supports Korean and English. If the system language is Korean, Korean is used; otherwise, English is used.
+The interface supports Korean and English. Korean is used when the system language is Korean; otherwise, English is displayed.
+
+---
+
+## Who Is It For?
+
+- Anyone who wants to verify installation and execution across multiple distributions before **releasing** `deb` / `rpm` / `pkg.tar.zst` / `zip` / `AppImage` packages
+- Anyone who does not want to reinstall an OS for every test — click **Reset** to return to the saved state
+- Anyone who wants clipboard sharing and shared folders between host and guest to work without complicated setup
+
+## Key Features
+
+| Feature | Description |
+|---|---|
+| **Snapshots / Reset** | Stores only differences, making snapshots fast and space-efficient. Each snapshot can be booted independently |
+| **Run Test** | Select a package from a folder, install and run it in the guest, check whether it stays alive, and save logs |
+| **Guest Tools CD** | Run one command in the guest to configure clipboard sharing, automatic display resizing, and shared folders. Works without network access |
+| **Shared Folders** | Host folders appear under `/mnt/<name>` in the guest (drive letters for Windows guests) |
+| **Data CD** | Burns a folder into an ISO and attaches it to the guest as a CD. Useful for transferring large installation files |
+| **Clone** | Creates an independent VM that shares no files with the original |
+| **Import Disk Image** | Start immediately from distribution-provided images such as qcow2, without installation |
+| **Windows 11 Guest** | Install using UEFI + TPM 2.0. Clipboard and shared folders are supported |
+| **Korean/English · Hanja Keys** | Sends keys that are not forwarded through the QEMU window by simulating them inside the guest |
+
+Supported Linux guests: Ubuntu / Debian-based, Fedora-based, and Arch-based distributions.
 
 ---
 
 ## Requirements
 
-- QEMU/KVM (`qemu-system-x86_64`, `qemu-img`) — a CPU with KVM support
-- Qt 6.11 or later (same as the other Iyagi Series applications: `~/Qt/6.11.1/gcc_64`)
-- An Ubuntu installation ISO (required once per VM)
+- An x86-64 PC with KVM support (hardware virtualization enabled in BIOS)
+- `qemu-system-x86`, `qemu-utils` — **required**
+- Optional packages depending on the features you use:
+
+| Package | Required For |
+|---|---|
+| `virtiofsd` | Shared folders (without it, only one shared folder works via SMB) |
+| `xorriso` | Guest Tools CD and Data CD |
+| `ovmf`, `swtpm`, `swtpm-tools` | Windows 11 guests (UEFI + TPM) |
+| `openssh-client` | Run Test |
+
+On Ubuntu:
 
 ```bash
-QT_PREFIX=$(ls -d "$HOME/Qt"/*/gcc_64 | sort -V | tail -1)
-
-cmake -S . -B build/linux-release \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_PREFIX_PATH="$QT_PREFIX"
-
-cmake --build build/linux-release -j$(nproc)
-
-./build/linux-release/VMIyagi
+sudo apt install qemu-system-x86 qemu-utils virtiofsd xorriso ovmf swtpm swtpm-tools
 ```
 
----
+When installed from a `.deb`, required packages are installed automatically, and the remaining packages are included as recommended dependencies.
 
-## First Time: Creating a VM
+## Installation
 
-1. **Launch VMIyagi** — If no base disk exists, you will be prompted to select an installation ISO. A 40GB disk is created and booted from the ISO.
-2. Install Ubuntu normally. **Use `iyagi` as the account name** (automation connects using this account).
-3. After installation, run `apt update && apt full-upgrade` inside the guest.
-4. **Prepare the guest** — See the section below.
-5. Shut down the guest and **save a snapshot** named `Clean`.
+Download the appropriate package for your distribution. Qt is bundled, so no separate Qt installation is required.
 
-From now on, clicking **Reset** returns the VM to the state saved at step 5.
-
-## Guest Preparation (Once per VM)
-
-The Ubuntu **Desktop** ISO does not include an SSH server or clipboard-sharing tools.
-
-Since automation has no way to enter the guest initially, a one-time manual setup is required.
-
-Click **Prepare Guest**. A preparation script will appear in the shared folder. Open a terminal inside the guest and paste and run the single command shown:
-
-- Installs `openssh-server`, `spice-vdagent`, `xclip`, and `wl-clipboard`
-- Registers the VMIyagi public key (`~/.ssh/vmiyagi_ed25519`, automatically generated if missing)
-- Configures the shared folder `/mnt/build` to be mounted automatically
-- Configures passwordless sudo **only for package-related commands** (`apt`, `dpkg`, and `systemctl`)
-
-If clipboard sharing is not working yet and you cannot paste the command, use **Type Command in Guest**.
-
-This types the command directly through the QEMU monitor, so no clipboard is required.
-
-After preparation is complete, use **Test Connection** to verify it. Then shut down the guest and use **Save Snapshot** to update `Clean`.
-
-If you do not save the snapshot, the preparation state will also be lost when you reset the VM.
+| Distribution | Package |
+|---|---|
+| Ubuntu 24.04 | `vmiyagi_<version>~ubuntu24.04_amd64.deb` |
+| Ubuntu 26.04 | `vmiyagi_<version>~ubuntu26.04_amd64.deb` |
+| Fedora | `vmiyagi-<version>-1.x86_64.rpm` |
+| Arch | `vmiyagi-<version>-1-x86_64.pkg.tar.zst` |
+| Other distributions | `vmiyagi-v<version>-x86_64.AppImage` or `…-linux-x64.zip` |
 
 ---
 
-## Normal Usage
+## Getting Started
 
-| Button | Description |
-|--------|-------------|
-| **Run / Stop** | Start or stop the VM (Stop sends an ACPI shutdown request) |
-| **Reset** | Restore the VM to the `Clean` snapshot |
-| **Save Snapshot** | Save the current state as a snapshot. Using the same name **updates it by merging the changes** |
-| **Clone** | Create an independent VM that shares no files with the original |
-| **Snapshot Manager** | List and delete snapshots. Deletion is blocked if another snapshot depends on it |
-| **Prepare Guest** | See above, plus connection testing and clipboard diagnostics |
-| **Type Command in Guest** | Type commands into the guest without using the clipboard |
-| **Run Test** | Select the latest Iyagi Series `.deb`, install and run it, then save the logs |
+1. **Create a VM** — Choose a name, firmware (BIOS for Linux, UEFI + TPM for Windows 11), and disk (empty disk or imported image).
+2. **Run** — If using an empty disk, select an installation ISO when prompted. Install the OS normally. The default account name is `iyagi`; if you use a different name, update it in **Settings**.
+3. **Prepare Guest** — Run the one-line command shown in the guest terminal to install the guest tools. If clipboard sharing is not working yet, **Type in Guest** will enter the command for you.
+4. Shut down the guest and **Save Snapshot** — use the name `Clean`.
 
-### Run Test
+Now use **Run Test** to test packages, and click **Reset** afterward to return to the state saved in step 4.
 
-VMIyagi scans `<project>/build/**.deb` and displays the **latest `.deb` for each project**.
+VMs are stored in `~/VMIyagi`. To move them, use **VM Folder → Move** in the application.
 
-After selecting a package:
+**Do not directly delete or rename snapshot files in a file manager.** Doing so may corrupt other snapshots.
 
-1. Copy it into the build folder (it immediately appears under `/mnt/build` in the guest)
-2. Install it using `apt-get install` to verify that dependencies are actually resolved and installed
-3. Locate the executable installed by the package and launch it on the guest desktop
-4. Check whether it is still running after 8 seconds
-5. Save the complete output to `logs/<vm>_<app>_<timestamp>.log`
+## Troubleshooting
 
-**For a genuinely clean test, click Reset before running the test.** Otherwise, you may be testing on a VM where dependencies from previous tests are already installed.
-
-### Clipboard / Display
-
-- Host–guest copy and paste is automatically connected **when the VM is launched**.
-  When the log shows `Clipboard connected`, it is ready.
-- A VM shown as **“Running (launched outside the app)”** was started by a previous application instance. Clipboard and logging are disconnected, so stop and restart it.
-- If the guest display flickers or looks corrupted, try changing the **Display Mode** from `virtio (GL off)` to `Safe`. The change takes effect on the next launch.
-
----
-
-## Important Notes
-
-- **VM disks are not backed up.** Snapshots are linked through differences (diff layers). Deleting files directly inside `vms/` from a file manager can corrupt other snapshots. Always delete snapshots through **Snapshot Manager**.
-- If the guest account is not named `iyagi`, SSH key authentication will be rejected.
-- Networking is fixed to QEMU user-mode NAT. Bridged networking and port forwarding are intentionally not exposed — they are outside the scope of this tool.
-
-Implementation details and pitfalls are documented in [DEVNOTES.md](DEVNOTES.md).
+- **Clipboard does not work** — Make sure Guest Tools are installed, then try **Prepare Guest → Clipboard Diagnostics**. Enable **Diagnostic Logging** to see the cause in the logs.
+- **Display flickers or does not appear** — Change **Display Mode** from `virtio (GL off)` → `Safe (VGA)`. The change takes effect on the next launch.
+- **"Running (launched outside the app)"** — The VM was already running before the application was started. Clipboard will reconnect, but if anything behaves incorrectly, shut down and restart the VM.
