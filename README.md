@@ -1,97 +1,46 @@
 # VMIyagi
 
-**만든 프로그램이 남의 PC 에서도 도는지, 깨끗한 VM 에서 확인하는 도구.**
+**"Works on my PC" isn't enough. Test your app on a clean Linux in seconds — install it, run it, check it, reset, repeat.**
 
-"내 PC 에서는 되는데"를 없애려고 만들었습니다. 아무것도 안 깔린 리눅스 VM 에 패키지를
-설치해 실행해 보고, 버튼 하나로 다시 깨끗한 상태로 되돌리는 일을 반복합니다.
+[English](README.md) · [한국어](README_ko.md)
 
-QEMU/KVM 위에 얹은 가벼운 관리 화면입니다. VirtualBox 처럼 모든 걸 다 하는 VM 관리자는
-아니고, 이 반복 작업에 필요한 기능만 있습니다.
+## Why VMIyagi?
 
-화면은 한국어와 영어를 지원합니다. 시스템 언어가 한국어면 한국어, 그 밖에는 영어로 뜹니다.
+- **Back to a clean system in one click.** Snapshots store only the differences, so they're fast and take almost no space. Reset and the VM is exactly as you saved it — no reinstalling the OS between tests.
+- **Test a package with one button.** Pick a `.deb`, `.rpm`, `.pkg.tar.zst`, AppImage or zip. **Run Test** installs it in the guest, launches it, checks it's still alive and collects the logs.
+- **Copy, paste and share folders without setup.** Run one command in the guest and clipboard, auto-resize and shared folders just work.
+- **Ubuntu, Debian, Fedora, Arch — and Windows 11.** Windows 11 installs with UEFI + TPM 2.0, with clipboard and shared folders too.
+- **Start from a ready-made image.** Import the qcow2 images distributions publish and boot without installing.
+- **Light, not a do-everything VM suite.** A small window on top of QEMU/KVM with just what this test loop needs.
 
----
-
-## 이런 분께 맞습니다
-
-- deb / rpm / pkg.tar.zst / zip / AppImage 를 배포하기 전에 여러 배포판에서 설치·실행을
-  확인하고 싶다
-- 테스트할 때마다 OS 를 새로 깔기 싫다 — **초기화** 한 번이면 저장해 둔 시점으로 돌아갑니다
-- 호스트와 게스트 사이 복사·붙여넣기, 공유폴더가 설정 없이 바로 됐으면 좋겠다
-
-## 주요 기능
+## Features
 
 | | |
 |---|---|
-| **스냅샷 / 초기화** | 차이만 저장해서 빠르고 용량을 거의 안 씁니다. 스냅샷마다 따로 부팅할 수 있습니다 |
-| **Run Test** | 폴더에서 패키지를 고르면 게스트에 설치하고 실행한 뒤, 살아 있는지 확인하고 로그를 남깁니다 |
-| **게스트 도구 CD** | 게스트에서 명령 한 줄만 치면 클립보드·화면 크기 자동 맞춤·공유폴더가 설정됩니다. 네트워크가 없어도 됩니다 |
-| **공유폴더** | 호스트 폴더가 게스트의 `/mnt/<이름>` 에 보입니다(Windows 게스트는 드라이브 문자) |
-| **데이터 CD** | 폴더를 ISO 로 구워 게스트에 CD 로 붙입니다. 큰 설치 파일을 옮길 때 씁니다 |
-| **복제** | 원본과 파일을 전혀 공유하지 않는 독립 VM 을 만듭니다 |
-| **디스크 이미지 가져오기** | 배포판이 제공하는 qcow2 등으로 설치 없이 바로 시작합니다 |
-| **Windows 11 게스트** | UEFI + TPM 2.0 으로 설치할 수 있습니다. 클립보드·공유폴더도 됩니다 |
-| **한/영·한자 키** | QEMU 창으로 전달되지 않는 키를 게스트 안에서 대신 눌러 줍니다 |
+| **Snapshot / reset** | Difference-only snapshots, boot any snapshot separately |
+| **Run Test** | Install → run → alive check → logs, from a package you pick |
+| **Guest tools CD** | Clipboard, auto screen size and shared folders with one command |
+| **Shared folders** | Host folder appears at `/mnt/<name>` (a drive letter on Windows guests) |
+| **Data CD** | Burn a folder to ISO and attach it — handy for large installers |
+| **Clone** | A fully independent copy of a VM |
+| **Import disk image** | Start from a distribution's qcow2 image |
+| **Windows 11 guests** | UEFI + TPM 2.0 |
+| **Korean/Hanja keys** | Sends keys QEMU's window doesn't pass through |
 
-지원하는 리눅스 게스트: Ubuntu / Debian 계열, Fedora 계열, Arch 계열.
+## Download
 
----
+**[⬇ Latest release](https://github.com/iyagicom/VMIyagi/releases/latest)**
 
-## 필요한 것
-
-- KVM 을 쓸 수 있는 x86-64 PC (BIOS 에서 가상화 켜짐)
-- `qemu-system-x86`, `qemu-utils` — **필수**
-- 기능에 따라 있으면 좋은 것:
-
-| 패키지 | 필요한 기능 |
+| Your system | File to pick |
 |---|---|
-| `virtiofsd` | 공유폴더 (없으면 공유 1개만 SMB 로 동작) |
-| `xorriso` | 게스트 도구 CD, 데이터 CD |
-| `ovmf`, `swtpm`, `swtpm-tools` | Windows 11 게스트 (UEFI + TPM) |
-| `openssh-client` | Run Test |
+| Ubuntu 24.04 · Debian | `.deb` marked **ubuntu24.04** |
+| Ubuntu 26.04 | `.deb` marked **ubuntu26.04** |
+| Fedora · openSUSE | `.rpm` |
+| Arch · Manjaro | `.pkg.tar.zst` |
+| Any other Linux | `.AppImage` or `.zip` |
 
-우분투라면:
+**You need** an x86-64 PC with virtualization (KVM) enabled, plus `qemu-system-x86` and `qemu-utils`. The `.deb` pulls these in for you, along with the optional helpers (`virtiofsd` for shared folders, `xorriso` for CDs, `ovmf` + `swtpm` for Windows 11).
 
 ```bash
-sudo apt install qemu-system-x86 qemu-utils virtiofsd xorriso ovmf swtpm swtpm-tools
+sudo apt install ./vmiyagi_*_amd64.deb       # Ubuntu / Debian
 ```
-
-deb 로 설치하면 필수 패키지는 자동으로 깔리고, 나머지는 권장 패키지로 함께 설치됩니다.
-
-## 설치
-
-배포판에 맞는 파일 하나를 받으세요. Qt 는 패키지에 들어 있어 따로 설치할 필요가 없습니다.
-
-| 배포판 | 파일 |
-|---|---|
-| Ubuntu 24.04 | `vmiyagi_<버전>~ubuntu24.04_amd64.deb` |
-| Ubuntu 26.04 | `vmiyagi_<버전>~ubuntu26.04_amd64.deb` |
-| Fedora | `vmiyagi-<버전>-1.x86_64.rpm` |
-| Arch | `vmiyagi-<버전>-1-x86_64.pkg.tar.zst` |
-| 그 밖의 배포판 | `vmiyagi-v<버전>-x86_64.AppImage` 또는 `…-linux-x64.zip` |
-
----
-
-## 시작하기
-
-1. **VM 생성** — 이름, 펌웨어(리눅스는 BIOS, Windows 11 은 UEFI + TPM), 디스크(빈 디스크 또는
-   이미지 가져오기)를 고릅니다
-2. **실행** — 빈 디스크면 설치용 ISO 를 고르라고 합니다. 평소처럼 OS 를 설치합니다.
-   계정 이름은 기본값이 `iyagi` 이고, 다르게 만들었다면 **설정**에서 맞춰 주세요
-3. **게스트 준비** — 게스트 터미널에 표시된 한 줄을 실행하면 게스트 도구가 설치됩니다.
-   클립보드가 아직 안 되면 **게스트에 입력** 버튼이 명령을 대신 쳐 넣어 줍니다
-4. 게스트를 종료하고 **스냅샷 저장** — 이름은 `Clean`
-
-이제 **Run Test** 로 패키지를 시험하고, 끝나면 **초기화**로 4번 시점으로 돌아가면 됩니다.
-
-VM 은 `~/VMIyagi` 에 저장됩니다. 옮기고 싶으면 앱의 **VM 폴더 → 이동**을 쓰세요.
-파일 탐색기에서 스냅샷 파일을 직접 지우거나 이름을 바꾸면 다른 스냅샷이 깨집니다.
-
-## 문제가 생기면
-
-- **클립보드가 안 된다** — 게스트 도구를 설치했는지 확인하고, **게스트 준비 → 클립보드 진단**을
-  눌러 보세요. **진단 로그**를 켜면 원인이 로그에 나옵니다
-- **화면이 떨리거나 안 뜬다** — **화면 방식**을 `virtio (GL 끔)` → `안전 (VGA)` 순으로
-  바꿔 보세요. 다음 실행부터 적용됩니다
-- **"Running (앱 밖에서 실행 중)"** 으로 보인다 — 앱을 다시 켜기 전부터 돌던 VM 입니다.
-  클립보드는 다시 연결되지만 이상하면 VM 을 껐다 켜세요
